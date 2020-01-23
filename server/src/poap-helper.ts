@@ -1,14 +1,12 @@
 import { Wallet, getDefaultProvider, utils } from 'ethers';
-import { verifyMessage } from 'ethers/utils';
-import pino from 'pino';
-import {
-  getSigner,
-} from './db';
-import getEnv from './envs';
-import {
-  Address,
-  Signer,
-} from './types';
+// import { verifyMessage } from 'ethers/utils';
+// import pino from 'pino';
+
+// import getEnv from './envs';
+// import {
+//   Address,
+//   Signer,
+// } from './types';
 
 // const Logger = pino();
 

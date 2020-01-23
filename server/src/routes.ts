@@ -1,11 +1,5 @@
 import { FastifyInstance } from 'fastify';
 import createError from 'http-errors';
-import {
-  getSigners,
-  getQrClaim,
-  claimQrClaim,
-  checkDualQrClaim,
-} from './db';
 
 import {
   // verifyClaim,
@@ -13,9 +7,8 @@ import {
   lookupAddress,
 } from './poap-helper';
 
-import { Claim } from './types';
-import crypto from 'crypto';
-import getEnv from './envs';
+// import crypto from 'crypto';
+// import getEnv from './envs';
 
 function sleep(ms: number) {
   return new Promise(resolve => {
@@ -135,128 +128,113 @@ export default async function routes(fastify: FastifyInstance) {
   //   }
   // );
 
-  fastify.get(
-    '/actions/claim-qr',
-    {
-      schema: {
-        querystring: {
-          qr_hash: { type: 'string' },
-        },
-      }
-    },
-    async (req, res) => {
-      const qr_hash = req.query.qr_hash || '';
+  // fastify.get(
+  //   '/actions/claim-qr',
+  //   {
+  //     schema: {
+  //       querystring: {
+  //         qr_hash: { type: 'string' },
+  //       },
+  //     }
+  //   },
+  //   async (req, res) => {
+  //     const qr_hash = req.query.qr_hash || '';
 
-      if (!qr_hash) {
-        return new createError.NotFound('Please send qr_hash as querystring parameter');
-      }
+  //     if (!qr_hash) {
+  //       return new createError.NotFound('Please send qr_hash as querystring parameter');
+  //     }
 
-      const qr_claim = await getQrClaim(qr_hash);
-      if (!qr_claim) {
-        await sleep(1000);
-        return new createError.NotFound('Qr Claim not found');
-      }
+  //     const qr_claim = await getQrClaim(qr_hash);
+  //     if (!qr_claim) {
+  //       await sleep(1000);
+  //       return new createError.NotFound('Qr Claim not found');
+  //     }
 
-      // const event = await getEvent(qr_claim.event_id);
-      // if (!event) {
-      //   return new createError.InternalServerError('Qr Claim does not have any event');
-      // }
-      // qr_claim.event = event;
+  // const event = await getEvent(qr_claim.event_id);
+  // if (!event) {
+  //   return new createError.InternalServerError('Qr Claim does not have any event');
+  // }
+  // qr_claim.event = event;
 
-      // const env = getEnv();
-      // qr_claim.secret = crypto.createHmac('sha256', env.secretKey).update(qr_hash).digest('hex');
+  // const env = getEnv();
+  // qr_claim.secret = crypto.createHmac('sha256', env.secretKey).update(qr_hash).digest('hex');
 
-      // qr_claim.tx_status = null;
-      // if (qr_claim.tx_hash) {
-      //   const transaction_status = await getTransaction(qr_claim.tx_hash);
-      //   if (transaction_status) {
-      //     qr_claim.tx_status = transaction_status.status;
-      //   }
-      // }
+  // qr_claim.tx_status = null;
+  // if (qr_claim.tx_hash) {
+  //   const transaction_status = await getTransaction(qr_claim.tx_hash);
+  //   if (transaction_status) {
+  //     qr_claim.tx_status = transaction_status.status;
+  //   }
+  // }
 
-      return qr_claim
-    }
-  );
+  //     return qr_claim
+  //   }
+  // );
 
-  fastify.post(
-    '/actions/claim-qr',
-    {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['address', 'qr_hash', 'secret'],
-        },
-      },
-    },
-    async (req, res) => {
-      const env = getEnv();
-      const secret = crypto.createHmac('sha256', env.secretKey).update(req.body.qr_hash).digest('hex');
+  // fastify.post(
+  //   '/actions/claim-qr',
+  //   {
+  //     schema: {
+  //       body: {
+  //         type: 'object',
+  //         required: ['address', 'qr_hash', 'secret'],
+  //       },
+  //     },
+  //   },
+  //   async (req, res) => {
+  //     const env = getEnv();
+  //     const secret = crypto.createHmac('sha256', env.secretKey).update(req.body.qr_hash).digest('hex');
 
-      // if (req.body.secret != secret) {
-      //   await sleep(1000)
-      //   return new createError.NotFound('Invalid secret');
-      // }
+  // if (req.body.secret != secret) {
+  //   await sleep(1000)
+  //   return new createError.NotFound('Invalid secret');
+  // }
 
-      // const qr_claim = await getQrClaim(req.body.qr_hash);
-      // if (!qr_claim) {
-      //   await sleep(1000)
-      //   return new createError.NotFound('Qr Claim not found');
-      // }
+  // const qr_claim = await getQrClaim(req.body.qr_hash);
+  // if (!qr_claim) {
+  //   await sleep(1000)
+  //   return new createError.NotFound('Qr Claim not found');
+  // }
 
-      // if (qr_claim.claimed) {
-      //   return new createError.BadRequest('Qr is already Claimed');
-      // }
+  // if (qr_claim.claimed) {
+  //   return new createError.BadRequest('Qr is already Claimed');
+  // }
 
-      // let claim_qr_claim = await claimQrClaim(req.body.qr_hash);
-      // if (!claim_qr_claim) {
-      //   return new createError.InternalServerError('There was a problem updating claim boolean');
-      // }
-      // qr_claim.claimed = true
+  // let claim_qr_claim = await claimQrClaim(req.body.qr_hash);
+  // if (!claim_qr_claim) {
+  //   return new createError.InternalServerError('There was a problem updating claim boolean');
+  // }
+  // qr_claim.claimed = true
 
-      // const event = await getEvent(qr_claim.event_id);
-      // if (!event) {
-      //   return new createError.InternalServerError('Qr Claim does not have any event');
-      // }
-      // qr_claim.event = event
+  // const event = await getEvent(qr_claim.event_id);
+  // if (!event) {
+  //   return new createError.InternalServerError('Qr Claim does not have any event');
+  // }
+  // qr_claim.event = event
 
-      // const parsed_address = await checkAddress(req.body.address);
-      // if (!parsed_address) {
-      //   return new createError.BadRequest('Address is not valid');
-      // }
+  // const parsed_address = await checkAddress(req.body.address);
+  // if (!parsed_address) {
+  //   return new createError.BadRequest('Address is not valid');
+  // }
 
-      // const dual_qr_claim = await checkDualQrClaim(qr_claim.event.id, parsed_address);
-      // if (!dual_qr_claim) {
-      //   return new createError.BadRequest('Address already has this claim');
-      // }
+  // const dual_qr_claim = await checkDualQrClaim(qr_claim.event.id, parsed_address);
+  // if (!dual_qr_claim) {
+  //   return new createError.BadRequest('Address already has this claim');
+  // }
 
-      // const has_token = await checkHasToken(qr_claim.event.id, parsed_address);
-      // if (has_token) {
-      //   await unclaimQrClaim(req.body.qr_hash);
-      //   return new createError.BadRequest('Address already has this claim');
-      // }
+  // const has_token = await checkHasToken(qr_claim.event.id, parsed_address);
+  // if (has_token) {
+  //   await unclaimQrClaim(req.body.qr_hash);
+  //   return new createError.BadRequest('Address already has this claim');
+  // }
 
-      // const tx_mint = await mintToken(qr_claim.event.id, parsed_address, false);
-      // if (!tx_mint || !tx_mint.hash) {
-      //   await unclaimQrClaim(req.body.qr_hash);
-      //   return new createError.InternalServerError('There was a problem in token mint');
-      // }
+  // const tx_mint = await mintToken(qr_claim.event.id, parsed_address, false);
+  // if (!tx_mint || !tx_mint.hash) {
+  //   await unclaimQrClaim(req.body.qr_hash);
+  //   return new createError.InternalServerError('There was a problem in token mint');
+  // }
 
-      return // qr_claim
-    }
-  );
-
-  //********************************************************************
-  // SIGNERS
-  //********************************************************************
-
-  fastify.get(
-    '/signers', {},
-    async (req, res) => {
-      let signers = await getSigners();
-
-      if (!signers) {
-        return new createError.NotFound('Signers not found');
-      }
-      return signers
-    });
+  //     return // qr_claim
+  //   }
+  // );
 }
