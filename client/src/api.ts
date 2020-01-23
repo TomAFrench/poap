@@ -1,10 +1,4 @@
 export type Address = string;
-export interface TokenInfo {
-  tokenId: string;
-  owner: string;
-  event: PoapEvent;
-  ownerText?: string;
-}
 export interface PoapEvent {
   id: number;
   fancy_id: string;
@@ -64,12 +58,6 @@ export interface Transaction {
   signer: string;
   status: string;
 }
-export interface PaginatedTransactions {
-  limit: number;
-  offset: number;
-  total: number;
-  transactions: Transaction[]
-}
 
 export type ENSQueryResult = { valid: false } | { valid: true; address: string };
 
@@ -95,33 +83,6 @@ export function getENSFromAddress(address: Address): Promise<AddressQueryResult>
   return fetchJson(`${API_BASE}/actions/ens_lookup/${address}`);
 }
 
-export function getTokensFor(address: string): Promise<TokenInfo[]> {
-  return fetchJson(`${API_BASE}/actions/scan/${address}`);
-}
-
-export function getTokenInfo(tokenId: string): Promise<TokenInfo> {
-  return fetchJson(`${API_BASE}/token/${tokenId}`);
-}
-
-export async function getEvents(): Promise<PoapEvent[]> {
-  return fetchJson(`${API_BASE}/events`);
-}
-
-export async function getEvent(fancyId: string): Promise<null | PoapEvent> {
-  return fetchJson(`${API_BASE}/events/${fancyId}`);
-}
-
-export async function getTokenInfoWithENS(tokenId: string): Promise<TokenInfo> {
-  const token = await getTokenInfo(tokenId);
-
-  try {
-    const ens = await getENSFromAddress(token.owner);
-    const ownerText = ens.valid ? `${ens.ens} (${token.owner})` : `${token.owner}`;
-    const tokenParsed = { ...token, ens, ownerText };
-    return tokenParsed;
-  } catch (error) {
-    return token;
-  }
 }
 
 export async function claimToken(claim: Claim): Promise<void> {
