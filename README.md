@@ -2,33 +2,23 @@
 
 ## Directory Sructure
 
-POAP is dividided in the following applications/projects:
+Kickback POAP is divided in the following applications/projects:
 
 - **eth**: ZeppelinOS project with POAP Contracts
-- **website**: Public website. Static website for poap
 - **server**: POAP's api server. All server logic goes here
 - **client**: React web application that represents the UI of the application. Uses _server_ as backend.
 - **signer**: Signer server, to be deployed on the event site in a private network address.
 
-Other directories:
-
-- **scripts**: utility scripts
-- **db**: SQL Schema and dump for poap
-
 ## Architecture
 
-POAP app is composed of:
+Kickback POAP app is composed of:
 
-- **POAP NFT Contract**. Ethereum smart contract that represents an NFT token. Each token represent a attestation of attendance
-  to a given event. Thus, token holders can attest their attendance to events by holding tokens.
-- **PostgresSQL DB**. Relational DB that maintains information about the events in POAP. New events can be added through the
-  backoffice. It's currently deployed as a Google Cloud SQL database
 - **Backend Server**. Node.js server backend. Provides an API to scan an address, claim a token, and backoffice administration tasks.
   Interacts with the database, and also with the smart contract.
 - **Client**. React application, hosted in firebase. It provides a UI for claim, scan and the backoffice. All operations goes
   through the backend server API.
-- **Signer**. Small node.js server, that plays an important part on the attestation protocol. The client access it during the claim
-  procedure. The event organizer runs it as a npm module with `npx poap-signer`. One signers is to be deployed for every event, on the event site.
+- **Signer**. Small node.js server that plays an important part on the attestation protocol. The client accesses it during the claim
+  procedure. The event organizer runs it as a npm module with `npx poap-signer`. One signer is to be deployed for every event, on the event site.
 
 ## How does a claim work?
 
@@ -38,21 +28,14 @@ for that event.
 
 Claim steps:
 
-1.  The user enters the claim url on the client app: `https://app.poap.xyz/claim/{my-event}`
+1.  The user enters the claim url on the client app: `https://checkin.kickback.events/claim/{my-event}`
 2.  The client app, obtains the _signer ip_ from the _backend api_; and tests it can connect to it.
 3.  The client app, obtains the user's _address_ from the user's wallet (Metamask for example)
 4.  The client app, post a claim request to the signer, with the user's address.
-5.  The signer service, receives the claim request, validates it's for the correct event, and cryptographicaly signs the request.
+5.  The signer service receives the claim request, validates it's for the correct event, and cryptographically signs the request.
 6.  The client app ask the user to signed the "signed claim request" it has receieved from the signer.
 7.  The client app sends the double signed claim request (signed by the user and the signer) to the backend server
-8.  The backend server, checks the correctness of both signatures and if everyting ok call the smart contract to mint a token for the user
-
-## Deployed Contracts
-
-Poap contract is already deployed in:
-
-- **Ropsten** `0x50C5CA3e7f5566dA3Aa64eC687D283fdBEC2A2F2`
-- **Mainnet** `0x22C1f6050E56d2876009903609a2cC3fEf83B415`
+8.  The backend server, checks the correctness of both signatures and if everything is ok then it stores the proof to give to the event admins afterwards
 
 ## Setup
 
@@ -65,34 +48,7 @@ Poap contract is already deployed in:
     (cd client; yarn install)
     (cd eth; yarn install)
 
-### Create Database & DBUser
-
-You'll need a postgresDB database. Install postgresql and then:
-
-```bash
-sudo su - postgres             # Don't needed in Mac
-createuser -s -W -P poap       # (enter poap as password)
-createdb -O poap poap_dev      # dev database
-createdb -O poap poap_test     # test database
-logout                         # Don't needed in Mac
-```
-
 ## Run the application
-
-### Create & Populate local DB
-
-on project's root:
-
-    yarn db:reset
-
-### Run Ganache
-
-    yarn ganache
-
-After each time you run ganache, you'll need to deploy contracts:
-
-    yarn contracts:deploy:dev
-    yarn contracts:migrate:dev # optional: to migrate current mainnet token holders
 
 ### configure .env
 
@@ -136,11 +92,6 @@ If you change contract logic and want to update it:
     npx zos session --network ropsten --from 0x79A560De1CD436d1D69896DDd8DcCb226f9Fa2fD --expires 3600
     npx zos push
     npx zos update Poap
-
-### Deploy Website (firebase)
-
-    cd website
-    yarn deploy # Will build & run firebase deploy
 
 ### Deploy Client (firebase)
 
