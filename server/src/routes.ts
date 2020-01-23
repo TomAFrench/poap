@@ -21,7 +21,6 @@ import {
 } from './db';
 
 import {
-  getAllTokens,
   verifyClaim,
   getAddressBalance,
   resolveName,

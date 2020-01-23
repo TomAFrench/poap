@@ -5,21 +5,6 @@ const AddressSchema = yup.object().shape({
   address: yup.string().required()
 });
 
-const GasPriceSchema = yup.object().shape({
-  gasPrice: yup
-    .number()
-    .required()
-    .positive(),
-});
-
-const BurnFormSchema = yup.object().shape({
-  tokenId: yup
-    .number()
-    .required()
-    .positive()
-    .integer(),
-});
-
 const PoapEventSchema = yup.object().shape({
   year: yup
     .number()
@@ -59,34 +44,7 @@ const PoapEventSchema = yup.object().shape({
     .nullable(),
 });
 
-const IssueForEventFormValueSchema = yup.object().shape({
-  eventId: yup
-    .number()
-    .required()
-    .min(1),
-  addressList: yup
-    .string()
-    .required(),
-  signer: yup
-    .string()
-    .required()
-    .matches(/^0x[0-9a-fA-F]{40}$/, 'Not a valid address'),
-});
 
-const IssueForUserFormValueSchema = yup.object().shape({
-  eventIds: yup
-    .array()
-    .of(yup.number().min(1))
-    .required()
-    .min(1),
-  address: yup
-    .string()
-    .required(),
-  signer: yup
-    .string()
-    .required()
-    .matches(/^0x[0-9a-fA-F]{40}$/, 'Not a valid address'),
-});
 
 const ClaimHashSchema = yup.object().shape({
   hash: yup
@@ -97,10 +55,6 @@ const ClaimHashSchema = yup.object().shape({
 
 export {
   AddressSchema,
-  GasPriceSchema,
-  BurnFormSchema,
   PoapEventSchema,
   ClaimHashSchema,
-  IssueForEventFormValueSchema,
-  IssueForUserFormValueSchema,
 };

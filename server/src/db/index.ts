@@ -105,20 +105,6 @@ export async function getEventByFancyId(fancyid: string): Promise<null | PoapEve
   return res ? replaceDates(res) : res;
 }
 
-export async function updateEvent(
-  fancyId: string,
-  changes: Pick<PoapEvent, 'signer' | 'signer_ip' | 'event_url' | 'image_url'>
-): Promise<boolean> {
-  const res = await db.result(
-    'update events set signer=${signer}, signer_ip=${signer_ip}, event_url=${event_url}, image_url=${image_url} where fancy_id = ${fancy_id}',
-    {
-      fancy_id: fancyId,
-      ...changes,
-    }
-  );
-  return res.rowCount === 1;
-}
-
 export async function updateSignerGasPrice(
   Id: string,
   GasPrice: string
@@ -131,19 +117,6 @@ export async function updateSignerGasPrice(
     }
   );
   return res.rowCount === 1;
-}
-
-export async function createEvent(event: Omit<PoapEvent, 'id'>): Promise<PoapEvent> {
-  const data = await db.one(
-    'INSERT INTO events(${this:name}) VALUES(${this:csv}) RETURNING id',
-    // 'INSERT INTO events (${this:names}) VALUES (${this:list}) RETURNING id',
-    event
-  );
-
-  return {
-    ...event,
-    id: data.id as number,
-  };
 }
 
 export async function saveTransaction(hash: string, nonce: number, operation: string, params: string, signer: Address, status: string, gas_price: string): Promise<boolean> {
