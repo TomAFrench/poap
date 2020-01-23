@@ -62,7 +62,7 @@ export const SignerClaimPage: React.FC<RouteComponentProps<{ event: string }>> =
 };
 
 enum ClaimState {
-  Iddle,
+  Idle,
   Working,
   Finished,
   Failed,
@@ -74,7 +74,7 @@ const ClaimPageInner: React.FC<{ event: KickbackEvent }> = React.memo(({ event }
   const checkLocation = useCallback(() => checkSigner(event.signer_ip, event.eventAddress), [event]);
   const [onLocation, checkingLocation] = useAsync(checkLocation);
 
-  const [claimState, setClaimState] = useState(ClaimState.Iddle);
+  const [claimState, setClaimState] = useState(ClaimState.Idle);
   const checkIn = useCallback(async (event: KickbackEvent, account: Address) => {
     setClaimState(ClaimState.Working);
     try {
@@ -110,7 +110,7 @@ const ClaimPageInner: React.FC<{ event: KickbackEvent }> = React.memo(({ event }
                   <>
                     <h2>Wallet</h2>
                     <p className="wallet-number">{account}</p>
-                    {claimState === ClaimState.Iddle && (
+                    {claimState === ClaimState.Idle && (
                       <ClaimButton
                         hasSigner={hasSigner}
                         onLocation={onLocation}
