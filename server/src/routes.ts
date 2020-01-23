@@ -4,8 +4,6 @@ import {
   getEvent,
   getEventByFancyId,
   getEvents,
-  updateEvent,
-  createEvent,
   getPoapSettingByName,
   getPoapSettings,
   updatePoapSettingByName,
@@ -24,22 +22,15 @@ import {
 
 import {
   getAllTokens,
-  getTokenInfo,
-  mintToken,
-  mintEventToManyUsers,
   verifyClaim,
-  mintUserToManyEvents,
-  burnToken,
-  bumpTransaction,
   getAddressBalance,
   resolveName,
   lookupAddress,
   checkAddress,
   checkHasToken,
-  getTokenImg
 } from './poap-helper';
 
-import { Claim, PoapEvent, TransactionStatus, Address } from './types';
+import { Claim, PoapEvent, TransactionStatus } from './types';
 import crypto from 'crypto';
 import getEnv from './envs';
 
@@ -176,92 +167,6 @@ export default async function routes(fastify: FastifyInstance) {
     }
   );
 
-  fastify.get(
-    '/actions/scan/:address',
-    {
-      schema: {
-        params: {
-          address: 'address#',
-        },
-      },
-    },
-    async (req, res) => {
-      const address = req.params.address;
-      const tokens = await getAllTokens(address);
-      return tokens;
-    }
-  );
-
-  fastify.post(
-    '/actions/mintEventToManyUsers',
-    {
-      preValidation: [fastify.authenticate],
-      schema: {
-        body: {
-          type: 'object',
-          required: ['eventId', 'addresses', 'signer_address'],
-          properties: {
-            eventId: { type: 'integer', minimum: 1 },
-            addresses: {
-              type: 'array',
-              minItems: 1,
-            },
-            address: {type: 'string'},
-            signer: {type: 'string'}
-          },
-        },
-      },
-    },
-    async (req, res) => {
-      let parsed_addresses: Address[] = []
-      for (var address of req.body.addresses) {
-        const parsed_address = await checkAddress(address);
-        if (!parsed_address) {
-          return new createError.BadRequest('Address is not valid');
-        }
-        parsed_addresses.push(parsed_address);
-      }
-
-      await mintEventToManyUsers(req.body.eventId, parsed_addresses, {
-        'signer': req.body.signer_address,
-        'estimate_mint_gas': parsed_addresses.length
-      });
-      res.status(204);
-      return;
-    }
-  );
-
-  fastify.post(
-    '/actions/mintUserToManyEvents',
-    {
-      preValidation: [fastify.authenticate],
-      schema: {
-        body: {
-          type: 'object',
-          required: ['eventIds', 'address', 'signer_address'],
-          properties: {
-            eventIds: { type: 'array', minItems: 1, items: { type: 'integer', minimum: 1 } },
-            address: {type: 'string'},
-            signer: {type: 'string'}
-          },
-        },
-      },
-    },
-    async (req, res) => {
-      const parsed_address = await checkAddress(req.body.address);
-      if (!parsed_address) {
-        return new createError.BadRequest('Address is not valid');
-      }
-
-      await mintUserToManyEvents(req.body.eventIds, parsed_address, {
-        'signer': req.body.signer_address,
-        'estimate_mint_gas': req.body.eventIds.length
-      });
-      res.status(204);
-      return;
-    }
-  );
-
   fastify.post(
     '/actions/claim',
     {
@@ -283,7 +188,8 @@ export default async function routes(fastify: FastifyInstance) {
       const claim: Claim = req.body;
       const isValid = await verifyClaim(claim);
       if (isValid) {
-        await mintToken(claim.eventId, claim.claimer);
+        //mark attended
+        //await mintToken(claim.eventId, claim.claimer);
         res.status(204);
       } else {
         throw new createError.BadRequest('Invalid Claim');
@@ -422,65 +328,6 @@ export default async function routes(fastify: FastifyInstance) {
     }
   );
 
-  fastify.post(
-    '/actions/bump',
-    {
-      preValidation: [fastify.authenticate],
-      schema: {
-        body: {
-          type: 'object',
-          required: ['txHash', 'gasPrice'],
-          properties: {
-            txHash: { type: 'string' },
-            gasPrice: { type: 'string'},
-          },
-        },
-      },
-    },
-    async (req, res) => {
-      await bumpTransaction(req.body.txHash, req.body.gasPrice);
-
-      res.status(204);
-      return;
-    }
-  );
-
-  fastify.get(
-    '/token/:tokenId',
-    {
-      schema: {
-        params: {
-          tokenId: { type: 'integer' },
-        },
-      },
-    },
-    async (req, res) => {
-      const tokenId = req.params.tokenId;
-      const tokenInfo = await getTokenInfo(tokenId);
-      return tokenInfo;
-    }
-  );
-
-  fastify.post(
-    '/burn/:tokenId',
-    {
-      preValidation: [fastify.authenticate],
-      schema: {
-        params: {
-          tokenId: { type: 'integer' },
-        },
-      },
-    },
-    async (req, res) => {
-      const isOk = await burnToken(req.params.tokenId);
-      if (!isOk) {
-        return new createError.NotFound('Invalid token or action');
-      }
-      res.status(204);
-      return;
-    }
-  );
-
   //********************************************************************
   // SETTINGS
   //********************************************************************
@@ -559,103 +406,6 @@ export default async function routes(fastify: FastifyInstance) {
         return new createError.NotFound('Invalid Event');
       }
       return event;
-    }
-  );
-
-  fastify.post(
-    '/events',
-    {
-      preValidation: [fastify.authenticate],
-      schema: {
-        body: {
-          type: 'object',
-          required: [
-            'fancy_id',
-            'name',
-            'description',
-            'city',
-            'country',
-            'start_date',
-            'end_date',
-            'year',
-            'event_url',
-            'image_url',
-            'signer',
-            'signer_ip',
-          ],
-          properties: {
-            fancy_id: { type: 'string' },
-            name: { type: 'string' },
-            description: { type: 'string' },
-            city: { type: 'string' },
-            country: { type: 'string' },
-            start_date: { type: 'string' },
-            end_date: { type: 'string' },
-            year: { type: 'integer' },
-            event_url: { type: 'string' },
-            image_url: { type: 'string' },
-            signer: { anyOf: ['address#', { type: 'null' }] },
-            signer_ip: { anyOf: [{ type: 'string' }, { type: 'null' }] },
-          },
-        },
-      },
-    },
-    async (req, res) => {
-      const newEvent = {
-        fancy_id: req.body.fancy_id,
-        name: req.body.name,
-        description: req.body.description,
-        city: req.body.city,
-        country: req.body.country,
-        start_date: req.body.start_date,
-        end_date: req.body.end_date,
-        year: req.body.year,
-        event_url: req.body.event_url,
-        image_url: req.body.image_url,
-        signer: req.body.signer,
-        signer_ip: req.body.signer_ip,
-      };
-
-      const event = await createEvent(newEvent);
-      if (event == null) {
-        return new createError.BadRequest('Invalid event');
-      }
-      return event;
-    }
-  );
-
-  fastify.put(
-    '/events/:fancyid',
-    {
-      preValidation: [fastify.authenticate],
-      schema: {
-        params: {
-          fancyid: { type: 'string' },
-        },
-        body: {
-          type: 'object',
-          required: ['signer', 'signer_ip', 'event_url', 'image_url'],
-          properties: {
-            signer: { anyOf: ['address#', { type: 'null' }] },
-            signer_ip: { anyOf: [{ type: 'string' }, { type: 'null' }] },
-            event_url: { type: 'string' },
-            image_url: { type: 'string' },
-          },
-        },
-      },
-    },
-    async (req, res) => {
-      const isOk = await updateEvent(req.params.fancyid, {
-        signer: req.body.signer,
-        signer_ip: req.body.signer_ip,
-        event_url: req.body.event_url,
-        image_url: req.body.image_url,
-      });
-      if (!isOk) {
-        return new createError.NotFound('Invalid event');
-      }
-      res.status(204);
-      return;
     }
   );
 
@@ -741,30 +491,4 @@ export default async function routes(fastify: FastifyInstance) {
       return;
     }
   );
-
-  fastify.get(
-    '/token/:tokenId/image',
-    {
-      schema: {
-        params: {
-          tokenId: { type: 'integer' },
-        },
-      },
-    },
-    async (req, res) => {
-      const tokenId = req.params.tokenId;
-      if (!tokenId) {
-        return new createError.NotFound('token_id is required');
-      }
-
-      const TokenImg = await getTokenImg(tokenId);
-      if (!TokenImg) {
-        return new createError.NotFound('error getting TokenImg');
-      }
-
-      res.redirect(TokenImg)
-      return;
-    }
-  );
-
 }
