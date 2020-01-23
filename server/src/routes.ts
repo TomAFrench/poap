@@ -1,9 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import createError from 'http-errors';
 import {
-  getEvent,
-  getEventByFancyId,
-  getEvents,
   getSigners,
   getQrClaim,
   claimQrClaim,
@@ -11,11 +8,9 @@ import {
 } from './db';
 
 import {
-  verifyClaim,
-  getAddressBalance,
+  // verifyClaim,
   resolveName,
   lookupAddress,
-  checkAddress,
 } from './poap-helper';
 
 import { Claim } from './types';
@@ -110,35 +105,35 @@ export default async function routes(fastify: FastifyInstance) {
     }
   );
 
-  fastify.post(
-    '/actions/claim',
-    {
-      schema: {
-        body: {
-          type: 'object',
-          required: ['claimId', 'eventId', 'proof', 'claimer', 'claimerSignature'],
-          properties: {
-            claimId: { type: 'string' },
-            eventId: { type: 'integer', minimum: 1 },
-            proof: 'signature#',
-            claimer: 'address#',
-            claimerSignature: 'signature#',
-          },
-        },
-      },
-    },
-    async (req, res) => {
-      const claim: Claim = req.body;
-      const isValid = await verifyClaim(claim);
-      if (isValid) {
-        //mark attended
-        //await mintToken(claim.eventId, claim.claimer);
-        res.status(204);
-      } else {
-        throw new createError.BadRequest('Invalid Claim');
-      }
-    }
-  );
+  // fastify.post(
+  //   '/actions/claim',
+  //   {
+  //     schema: {
+  //       body: {
+  //         type: 'object',
+  //         required: ['claimId', 'eventId', 'proof', 'claimer', 'claimerSignature'],
+  //         properties: {
+  //           claimId: { type: 'string' },
+  //           eventId: { type: 'integer', minimum: 1 },
+  //           proof: 'signature#',
+  //           claimer: 'address#',
+  //           claimerSignature: 'signature#',
+  //         },
+  //       },
+  //     },
+  //   },
+  //   async (req, res) => {
+  //     const claim: Claim = req.body;
+  //     const isValid = await verifyClaim(claim);
+  //     if (isValid) {
+  //       //mark attended
+  //       //await mintToken(claim.eventId, claim.claimer);
+  //       res.status(204);
+  //     } else {
+  //       throw new createError.BadRequest('Invalid Claim');
+  //     }
+  //   }
+  // );
 
   fastify.get(
     '/actions/claim-qr',
@@ -162,14 +157,14 @@ export default async function routes(fastify: FastifyInstance) {
         return new createError.NotFound('Qr Claim not found');
       }
 
-      const event = await getEvent(qr_claim.event_id);
-      if (!event) {
-        return new createError.InternalServerError('Qr Claim does not have any event');
-      }
-      qr_claim.event = event;
+      // const event = await getEvent(qr_claim.event_id);
+      // if (!event) {
+      //   return new createError.InternalServerError('Qr Claim does not have any event');
+      // }
+      // qr_claim.event = event;
 
-      const env = getEnv();
-      qr_claim.secret = crypto.createHmac('sha256', env.secretKey).update(qr_hash).digest('hex');
+      // const env = getEnv();
+      // qr_claim.secret = crypto.createHmac('sha256', env.secretKey).update(qr_hash).digest('hex');
 
       // qr_claim.tx_status = null;
       // if (qr_claim.tx_hash) {
@@ -197,42 +192,42 @@ export default async function routes(fastify: FastifyInstance) {
       const env = getEnv();
       const secret = crypto.createHmac('sha256', env.secretKey).update(req.body.qr_hash).digest('hex');
 
-      if (req.body.secret != secret) {
-        await sleep(1000)
-        return new createError.NotFound('Invalid secret');
-      }
+      // if (req.body.secret != secret) {
+      //   await sleep(1000)
+      //   return new createError.NotFound('Invalid secret');
+      // }
 
-      const qr_claim = await getQrClaim(req.body.qr_hash);
-      if (!qr_claim) {
-        await sleep(1000)
-        return new createError.NotFound('Qr Claim not found');
-      }
+      // const qr_claim = await getQrClaim(req.body.qr_hash);
+      // if (!qr_claim) {
+      //   await sleep(1000)
+      //   return new createError.NotFound('Qr Claim not found');
+      // }
 
-      if (qr_claim.claimed) {
-        return new createError.BadRequest('Qr is already Claimed');
-      }
+      // if (qr_claim.claimed) {
+      //   return new createError.BadRequest('Qr is already Claimed');
+      // }
 
-      let claim_qr_claim = await claimQrClaim(req.body.qr_hash);
-      if (!claim_qr_claim) {
-        return new createError.InternalServerError('There was a problem updating claim boolean');
-      }
-      qr_claim.claimed = true
+      // let claim_qr_claim = await claimQrClaim(req.body.qr_hash);
+      // if (!claim_qr_claim) {
+      //   return new createError.InternalServerError('There was a problem updating claim boolean');
+      // }
+      // qr_claim.claimed = true
 
-      const event = await getEvent(qr_claim.event_id);
-      if (!event) {
-        return new createError.InternalServerError('Qr Claim does not have any event');
-      }
-      qr_claim.event = event
+      // const event = await getEvent(qr_claim.event_id);
+      // if (!event) {
+      //   return new createError.InternalServerError('Qr Claim does not have any event');
+      // }
+      // qr_claim.event = event
 
-      const parsed_address = await checkAddress(req.body.address);
-      if (!parsed_address) {
-        return new createError.BadRequest('Address is not valid');
-      }
+      // const parsed_address = await checkAddress(req.body.address);
+      // if (!parsed_address) {
+      //   return new createError.BadRequest('Address is not valid');
+      // }
 
-      const dual_qr_claim = await checkDualQrClaim(qr_claim.event.id, parsed_address);
-      if (!dual_qr_claim) {
-        return new createError.BadRequest('Address already has this claim');
-      }
+      // const dual_qr_claim = await checkDualQrClaim(qr_claim.event.id, parsed_address);
+      // if (!dual_qr_claim) {
+      //   return new createError.BadRequest('Address already has this claim');
+      // }
 
       // const has_token = await checkHasToken(qr_claim.event.id, parsed_address);
       // if (has_token) {
@@ -246,31 +241,7 @@ export default async function routes(fastify: FastifyInstance) {
       //   return new createError.InternalServerError('There was a problem in token mint');
       // }
 
-      return qr_claim
-    }
-  );
-
-  //********************************************************************
-  // EVENTS
-  //********************************************************************
-
-  fastify.get('/events', () => getEvents());
-
-  fastify.get(
-    '/events/:fancyid',
-    {
-      schema: {
-        params: {
-          fancyid: { type: 'string' },
-        },
-      },
-    },
-    async (req, res) => {
-      const event = await getEventByFancyId(req.params.fancyid);
-      if (!event) {
-        return new createError.NotFound('Invalid Event');
-      }
-      return event;
+      return // qr_claim
     }
   );
 
