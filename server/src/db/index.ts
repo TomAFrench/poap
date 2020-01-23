@@ -18,25 +18,25 @@ export async function getSigner(address: string): Promise<null | Signer> {
   return res;
 }
 
-export async function getQrClaim(qr_hash: string): Promise<null | ClaimQR> {
-  const res = await db.oneOrNone<ClaimQR>('SELECT * FROM qr_claims WHERE qr_hash=${qr_hash} AND is_active = true', { qr_hash });
-  return res;
-}
+// export async function getQrClaim(qr_hash: string): Promise<null | ClaimQR> {
+//   const res = await db.oneOrNone<ClaimQR>('SELECT * FROM qr_claims WHERE qr_hash=${qr_hash} AND is_active = true', { qr_hash });
+//   return res;
+// }
 
-export async function checkDualQrClaim(event_id: number, address: string): Promise<boolean> {
-  const res = await db.oneOrNone<ClaimQR>('SELECT * FROM qr_claims WHERE event_id = ${event_id} AND beneficiary = ${address} AND is_active = true', {
-    event_id,
-    address
-  });
-  return res === null;
-}
+// export async function checkDualQrClaim(event_id: number, address: string): Promise<boolean> {
+//   const res = await db.oneOrNone<ClaimQR>('SELECT * FROM qr_claims WHERE event_id = ${event_id} AND beneficiary = ${address} AND is_active = true', {
+//     event_id,
+//     address
+//   });
+//   return res === null;
+// }
 
-export async function adQrClaim(qr_hash: string): Promise<null | ClaimQR> {
-  const res = await db.oneOrNone<ClaimQR>('SELECT * FROM qr_claims WHERE qr_hash = $1 AND is_active = true', [qr_hash]);
-  return res;
-}
+// export async function adQrClaim(qr_hash: string): Promise<null | ClaimQR> {
+//   const res = await db.oneOrNone<ClaimQR>('SELECT * FROM qr_claims WHERE qr_hash = $1 AND is_active = true', [qr_hash]);
+//   return res;
+// }
 
-export async function claimQrClaim(qr_hash: string) {
-  const res = await db.result('update qr_claims set claimed=true, claimed_date=current_timestamp where qr_hash = $1', [qr_hash]);
-  return res.rowCount === 1;
-}
+// export async function claimQrClaim(qr_hash: string) {
+//   const res = await db.result('update qr_claims set claimed=true, claimed_date=current_timestamp where qr_hash = $1', [qr_hash]);
+//   return res.rowCount === 1;
+// }

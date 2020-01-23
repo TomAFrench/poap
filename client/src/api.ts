@@ -167,14 +167,14 @@ export async function getSigners(): Promise<AdminAddress[]> {
   return fetchJson(`${API_BASE}/signers`);
 }
 
-export async function getClaimHash(hash: string): Promise<HashClaim> {
-  return fetchJson(`${API_BASE}/actions/claim-qr?qr_hash=${hash}`);
-}
+// export async function getClaimHash(hash: string): Promise<HashClaim> {
+//   return fetchJson(`${API_BASE}/actions/claim-qr?qr_hash=${hash}`);
+// }
 
-export async function postClaimHash(qr_hash: string, address: string, secret: string): Promise<HashClaim> {
-  return fetchJson(`${API_BASE}/actions/claim-qr`, {
-    method: 'POST',
-    body: JSON.stringify({ qr_hash, address, secret }),
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
+// export async function postClaimHash(qr_hash: string, address: string, secret: string): Promise<HashClaim> {
+//   return fetchJson(`${API_BASE}/actions/claim-qr`, {
+//     method: 'POST',
+//     body: JSON.stringify({ qr_hash, address, secret }),
+//     headers: { 'Content-Type': 'application/json' },
+//   });
+// }
