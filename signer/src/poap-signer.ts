@@ -12,7 +12,7 @@ import uuidv1 from 'uuid/v1';
 const program = commander
   .option('-g --genkeys', 'Generate Addres/Private key pair')
   .option('-p --port <number>', 'Port to listen to', v => parseInt(v), 8080)
-  .option('-e --event <number>', 'EventID for signing', v => parseInt(v))
+  .option('-e --event <number>', 'Event Address for signing', v => parseInt(v))
   .option('-k --sk <privatekey>', 'Private Key for signing')
   .parse(process.argv);
 
@@ -59,7 +59,7 @@ fastify.register(fastifyCompress, {});
 
 fastify.get('/check', async (req, res) => {
   return {
-    eventId: program.event,
+    eventAddress: program.event,
   };
 });
 
@@ -69,9 +69,14 @@ fastify.post(
     schema: {
       body: {
         type: 'object',
-        required: ['eventId', 'claimer'],
+        required: ['eventAddress', 'claimer'],
         properties: {
-          eventId: { type: 'integer', minimum: 1 },
+          eventAddress: {
+            type: 'string',
+            minLength: 42,
+            maxLength: 42,
+            pattern: '^0x[0-9a-fA-F]{40}$',
+          },
           claimer: {
             type: 'string',
             minLength: 42,
@@ -91,18 +96,18 @@ fastify.post(
     },
   },
   async req => {
-    const { eventId, claimer }: { eventId: number; claimer: string } = req.body;
+    const { eventAddress, claimer }: { eventAddress: string; claimer: string } = req.body;
 
-    if (eventId != program.event) {
+    if (eventAddress != program.event) {
       return new createError.BadRequest('Invalid EventId');
     }
 
     const claimId = uuidv1();
-    const msg = JSON.stringify([claimId, eventId, claimer]);
+    const msg = JSON.stringify([claimId, eventAddress, claimer]);
     const proof = await signerWallet.signMessage(msg);
     return {
       claimId,
-      eventId,
+      eventAddress,
       claimer,
       proof,
     };
@@ -111,7 +116,7 @@ fastify.post(
 
 const start = async () => {
   console.log(`POAP Signer Started (v1.1):`);
-  console.log(`EventID: ${program.event}`);
+  console.log(`Event Address: ${program.event}`);
 
   try {
     await fastify.listen(program.port, '0.0.0.0');
