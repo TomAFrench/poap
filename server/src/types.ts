@@ -2,26 +2,6 @@ export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 
 export type Address = string;
 
-export type TxStatusPayload = {
-  confirmed?: string,
-  execution_error?: string
-}
-
-export enum OperationType {
-  mintToken = 'mintToken',
-  mintEventToManyUsers = 'mintEventToManyUsers',
-  mintUserToManyEvents = 'mintUserToManyEvents',
-  burnToken = 'burnToken',
-  vote = 'vote',
-}
-
-export enum TransactionStatus {
-  pending = 'pending',
-  passed = 'passed',
-  failed = 'failed',
-  bumped = 'bumped',
-}
-
 export enum SignerRole {
   administrator = 'administrator',
   standard = 'standard',
@@ -49,13 +29,6 @@ export interface PoapEvent {
   end_date: string;
 }
 
-export interface PoapSetting {
-  id: number;
-  name: string;
-  type: string;
-  value: string;
-}
-
 export interface Signer {
   id: number;
   signer: Address;
@@ -64,18 +37,6 @@ export interface Signer {
   created_date: Date;
   balance: string;
   pending_tx: number;
-}
-
-export interface Transaction {
-  id: number;
-  tx_hash: string;
-  nonce: number;
-  signer: Address;
-  operation: OperationType;
-  arguments: string;
-  status: TransactionStatus;
-  gas_price: string;
-  created_date: Date;
 }
 
 export interface ClaimQR {
@@ -88,7 +49,7 @@ export interface ClaimQR {
   beneficiary: null | Address;
   signer: null | Address;
   claimed: boolean;
-  tx_status: null | TransactionStatus;
+  tx_status: null;
   claimed_date: Date;
   created_date: Date;
   is_active: boolean;

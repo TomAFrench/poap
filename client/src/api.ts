@@ -44,12 +44,6 @@ export interface HashClaim {
   tx_status: string
   secret: string;
 }
-export interface PoapSetting {
-  id: number;
-  name: string;
-  type: string;
-  value: string;
-}
 export interface AdminAddress {
   id: number;
   signer: Address;
@@ -115,10 +109,6 @@ export async function getEvents(): Promise<PoapEvent[]> {
 
 export async function getEvent(fancyId: string): Promise<null | PoapEvent> {
   return fetchJson(`${API_BASE}/events/${fancyId}`);
-}
-
-export async function getSetting(settingName: string): Promise<null | PoapSetting> {
-  return fetchJson(`${API_BASE}/settings/${settingName}`);
 }
 
 export async function getTokenInfoWithENS(tokenId: string): Promise<TokenInfo> {
