@@ -14,12 +14,21 @@ export interface PoapEvent {
   start_date: string;
   end_date: string;
 }
+export interface KickbackEvent {
+  eventAddress: Address;
+  signer: Address;
+  signer_ip: string;
+  name: string;
+  event_url: string;
+  image_url: string;
+}
+
 export interface Claim extends ClaimProof {
   claimerSignature: string;
 }
 export interface ClaimProof {
   claimId: string;
-  eventId: number;
+  eventAddress: Address;
   claimer: Address;
   proof: string;
 }
@@ -83,6 +92,8 @@ export function getENSFromAddress(address: Address): Promise<AddressQueryResult>
   return fetchJson(`${API_BASE}/actions/ens_lookup/${address}`);
 }
 
+export async function getEvent(eventAddress: string): Promise<null | KickbackEvent> {
+  return null //fetchJson(`${API_BASE}/events/${fancyId}`);
 }
 
 export async function claimToken(claim: Claim): Promise<void> {
@@ -99,14 +110,14 @@ export async function claimToken(claim: Claim): Promise<void> {
   }
 }
 
-export async function checkSigner(signerIp: string, eventId: number): Promise<boolean> {
+export async function checkSigner(signerIp: string, eventAddress: Address): Promise<boolean> {
   try {
     const res = await fetch(`${signerIp}/check`);
     if (!res.ok) {
       return false;
     }
     const body = await res.json();
-    return body.eventId === eventId;
+    return body.eventAddress === eventAddress;
   } catch (err) {
     return false;
   }
@@ -114,12 +125,12 @@ export async function checkSigner(signerIp: string, eventId: number): Promise<bo
 
 export async function requestProof(
   signerIp: string,
-  eventId: number,
+  eventAddress: Address,
   claimer: string
 ): Promise<ClaimProof> {
   return fetchJson(`${signerIp}/api/proof`, {
     method: 'POST',
-    body: JSON.stringify({ eventId, claimer }),
+    body: JSON.stringify({ eventAddress, claimer }),
     headers: { 'Content-Type': 'application/json' },
   });
 }

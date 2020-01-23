@@ -3,8 +3,8 @@ import { RouteComponentProps } from 'react-router';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 
-import { getEvent, PoapEvent, checkSigner } from '../api';
-import { tryGetAccount, tryObtainBadge, hasMetamask, isMetamaskLogged } from '../poap-eth';
+import { getEvent, checkSigner, KickbackEvent, Address } from '../api';
+import { tryGetAccount, hasMetamask, isMetamaskLogged, tryCheckIn } from '../poap-eth';
 import { useAsync, useBodyClassName } from '../react-helpers';
 import { ClaimFooter } from '../components/ClaimFooter';
 
@@ -15,13 +15,13 @@ import HeaderShadowGreenImg from '../images/header-shadow-green.svg';
 import HeaderShadowImg from '../images/header-shadow.svg';
 
 type ClaimPageState = {
-  event: null | PoapEvent;
+  event: null | KickbackEvent;
   invalidEventFlag: boolean;
 };
 
 export const LoadEvent: React.FC<{
   fancyId: string;
-  render: (event: PoapEvent) => React.ReactElement;
+  render: (event: KickbackEvent) => React.ReactElement;
 }> = ({ fancyId, render }) => {
   const getEventMemo = useCallback(() => getEvent(fancyId), [fancyId]);
   const [event, fetchingEvent, fetchEventError] = useAsync(getEventMemo);
@@ -69,16 +69,16 @@ enum ClaimState {
   MetaMaskLoggedOut,
 }
 
-const ClaimPageInner: React.FC<{ event: PoapEvent }> = React.memo(({ event }) => {
+const ClaimPageInner: React.FC<{ event: KickbackEvent }> = React.memo(({ event }) => {
   const hasSigner = event.signer != null && event.signer_ip != null;
-  const checkLocation = useCallback(() => checkSigner(event.signer_ip, event.id), [event]);
+  const checkLocation = useCallback(() => checkSigner(event.signer_ip, event.eventAddress), [event]);
   const [onLocation, checkingLocation] = useAsync(checkLocation);
 
   const [claimState, setClaimState] = useState(ClaimState.Iddle);
-  const obtainBadge = useCallback(async (event: PoapEvent, account: string) => {
+  const checkIn = useCallback(async (event: KickbackEvent, account: Address) => {
     setClaimState(ClaimState.Working);
     try {
-      await tryObtainBadge(event, account);
+      await tryCheckIn(event, account);
       setClaimState(ClaimState.Finished);
     } catch (err) {
       console.log(err);
@@ -115,7 +115,7 @@ const ClaimPageInner: React.FC<{ event: PoapEvent }> = React.memo(({ event }) =>
                         hasSigner={hasSigner}
                         onLocation={onLocation}
                         checkingLocation={checkingLocation}
-                        obtainBadge={() => obtainBadge(event, account)}
+                        obtainBadge={() => checkIn(event, account)}
                       />
                     )}
                     {claimState === ClaimState.Working && <Loading />}
@@ -186,7 +186,7 @@ const ClaimButton: React.FC<ClaimButtonProps> = React.memo(
   }
 );
 
-const ClaimHeader: React.FC<{ event: PoapEvent }> = React.memo(({ event }) => (
+const ClaimHeader: React.FC<{ event: KickbackEvent }> = React.memo(({ event }) => (
   <header id="site-header" role="banner" className="header-events">
     <div className="container">
       <h1>{event.name}</h1>
