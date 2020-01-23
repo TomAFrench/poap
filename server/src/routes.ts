@@ -34,9 +34,9 @@ import { Claim, PoapEvent, TransactionStatus } from './types';
 import crypto from 'crypto';
 import getEnv from './envs';
 
-function sleep(ms: number){
-  return new Promise(resolve=>{
-      setTimeout(resolve,ms)
+function sleep(ms: number) {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
   })
 }
 
@@ -231,7 +231,7 @@ export default async function routes(fastify: FastifyInstance) {
       qr_claim.tx_status = null;
       if (qr_claim.tx_hash) {
         const transaction_status = await getTransaction(qr_claim.tx_hash);
-        if(transaction_status) {
+        if (transaction_status) {
           qr_claim.tx_status = transaction_status.status;
         }
       }
@@ -254,7 +254,7 @@ export default async function routes(fastify: FastifyInstance) {
       const env = getEnv();
       const secret = crypto.createHmac('sha256', env.secretKey).update(req.body.qr_hash).digest('hex');
 
-      if(req.body.secret != secret) {
+      if (req.body.secret != secret) {
         await sleep(1000)
         return new createError.NotFound('Invalid secret');
       }
@@ -318,7 +318,7 @@ export default async function routes(fastify: FastifyInstance) {
 
       if (qr_claim.tx_hash) {
         const transaction_status = await getTransaction(qr_claim.tx_hash);
-        if(transaction_status) {
+        if (transaction_status) {
           qr_claim.tx_status = transaction_status.status
         }
 

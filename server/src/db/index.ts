@@ -25,13 +25,13 @@ export async function getEvents(): Promise<PoapEvent[]> {
 export async function getTransactions(limit: number, offset: number, statusList: string[]): Promise<Transaction[]> {
   let query = "SELECT * FROM server_transactions WHERE status IN (${statusList:csv}) ORDER BY created_date DESC" +
     " LIMIT ${limit} OFFSET ${offset}";
-  const res = await db.result(query, {statusList, limit, offset});
+  const res = await db.result(query, { statusList, limit, offset });
   return res.rows
 }
 
 export async function getTotalTransactions(statusList: string[]): Promise<number> {
   let query = 'SELECT COUNT(*) FROM server_transactions WHERE status IN (${statusList:csv})'
-  const res = await db.result(query, {statusList});
+  const res = await db.result(query, { statusList });
   return res.rows[0].count;
 }
 
@@ -50,9 +50,9 @@ export async function getPoapSettingByName(name: string): Promise<null | PoapSet
   return res;
 }
 
-export async function updatePoapSettingByName(name:string, type:string, value:string): Promise<boolean> {
+export async function updatePoapSettingByName(name: string, type: string, value: string): Promise<boolean> {
   let query = 'update poap_settings set type=${type}, value=${value} where name=${name}';
-  let values = {type, value, name};
+  let values = { type, value, name };
   const res = await db.result(query, values);
   return res.rowCount === 1;
 }
@@ -63,7 +63,7 @@ export async function getSigner(address: string): Promise<null | Signer> {
 }
 
 export async function getAvailableHelperSigners(): Promise<null | Signer[]> {
-  const res = await db.manyOrNone  (`
+  const res = await db.manyOrNone(`
     SELECT s.id, s.signer, SUM(case when st.status = 'pending' then 1 else 0 end) as pending_txs
     FROM signers s LEFT JOIN server_transactions st on s.signer = st.signer
     WHERE s.role != 'administrator'
@@ -86,11 +86,11 @@ export async function getPendingTxs(): Promise<Transaction[]> {
 export async function getPendingTxsAmount(signer: Signer): Promise<Signer> {
   const signer_address = signer.signer
   const status = TransactionStatus.pending;
-  const res = await db.result('SELECT COUNT(*) FROM server_transactions WHERE status = ${status} AND signer = ${signer_address}', 
-  {
-    status,
-    signer_address
-  });
+  const res = await db.result('SELECT COUNT(*) FROM server_transactions WHERE status = ${status} AND signer = ${signer_address}',
+    {
+      status,
+      signer_address
+    });
   signer.pending_tx = res.rows[0].count;
   return signer
 }
@@ -146,10 +146,10 @@ export async function createEvent(event: Omit<PoapEvent, 'id'>): Promise<PoapEve
   };
 }
 
-export async function saveTransaction(hash: string, nonce: number, operation: string, params: string, signer: Address, status: string, gas_price: string ): Promise<boolean>{
+export async function saveTransaction(hash: string, nonce: number, operation: string, params: string, signer: Address, status: string, gas_price: string): Promise<boolean> {
   let query = "INSERT INTO server_transactions(tx_hash, nonce, operation, arguments, signer, status, gas_price) VALUES (${hash}, ${nonce}, ${operation}, ${params}, ${signer}, ${status}, ${gas_price})";
-  let values = {hash, nonce, operation, params: params.substr(0, 950), signer, status, gas_price};
-  try{
+  let values = { hash, nonce, operation, params: params.substr(0, 950), signer, status, gas_price };
+  try {
     const res = await db.result(query, values);
     return res.rowCount === 1;
   } catch (e) {
@@ -172,7 +172,7 @@ export async function updateTransactionStatus(hash: string, status: TransactionS
 }
 
 export async function getQrClaim(qr_hash: string): Promise<null | ClaimQR> {
-  const res = await db.oneOrNone<ClaimQR>('SELECT * FROM qr_claims WHERE qr_hash=${qr_hash} AND is_active = true', {qr_hash});
+  const res = await db.oneOrNone<ClaimQR>('SELECT * FROM qr_claims WHERE qr_hash=${qr_hash} AND is_active = true', { qr_hash });
   return res;
 }
 
@@ -199,16 +199,16 @@ export async function unclaimQrClaim(qr_hash: string) {
   return res.rowCount === 1;
 }
 
-export async function updateQrClaim(qr_hash: string, beneficiary:string, tx: ContractTransaction) {
+export async function updateQrClaim(qr_hash: string, beneficiary: string, tx: ContractTransaction) {
   const tx_hash = tx.hash
   const signer = tx.from
 
   const res = await db.result('update qr_claims set tx_hash=${tx_hash}, beneficiary=${beneficiary}, signer=${signer} where qr_hash = ${qr_hash}',
-  {
-    tx_hash,
-    beneficiary,
-    signer,
-    qr_hash
-  });
+    {
+      tx_hash,
+      beneficiary,
+      signer,
+      qr_hash
+    });
   return res.rowCount === 1;
 }
