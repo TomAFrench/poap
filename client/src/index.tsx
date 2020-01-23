@@ -1,18 +1,16 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import App from './App';
-import { authClient } from './auth';
 import * as serviceWorker from './serviceWorker';
 import './scss/main.scss';
 import './poap-eth';
 import AOS from 'aos';
 
 async function main() {
-  await authClient.init();
   AOS.init({
     once: true,
   });
-  ReactDOM.render(<App auth={authClient} />, document.getElementById('root'));
+  ReactDOM.render(<App />, document.getElementById('root'));
 }
 
 main().catch(err => {

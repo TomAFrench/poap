@@ -1,5 +1,3 @@
-import { authClient } from './auth';
-
 export type Address = string;
 export interface TokenInfo {
   tokenId: string;
@@ -95,35 +93,6 @@ async function fetchJson<A>(input: RequestInfo, init?: RequestInit): Promise<A> 
   }
 }
 
-async function secureFetchNoResponse(input: RequestInfo, init?: RequestInit): Promise<void> {
-  const bearer = 'Bearer ' + (await authClient.getAPIToken());
-  const res = await fetch(input, {
-    ...init,
-    headers: {
-      Authorization: bearer,
-      ...(init ? init.headers : {}),
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`Request Failed => statusCode: ${res.status} msg: ${res.statusText}`);
-  }
-}
-
-async function secureFetch<A>(input: RequestInfo, init?: RequestInit): Promise<A> {
-  const bearer = 'Bearer ' + (await authClient.getAPIToken());
-  const res = await fetch(input, {
-    ...init,
-    headers: {
-      Authorization: bearer,
-      ...(init ? init.headers : {}),
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`Request Failed => statusCode: ${res.status} msg: ${res.statusText}`);
-  }
-  return await res.json();
-}
-
 export function resolveENS(name: string): Promise<ENSQueryResult> {
   return fetchJson(`${API_BASE}/actions/ens_resolve?name=${encodeURIComponent(name)}`);
 }
@@ -204,79 +173,8 @@ export async function requestProof(
   });
 }
 
-export function setSetting(settingName: string, settingValue: string): Promise<any> {
-  return secureFetchNoResponse(`${API_BASE}/settings/${settingName}/${settingValue}`, {
-    method: 'PUT',
-  });
-}
-
-export function burnToken(tokenId: string): Promise<any> {
-  return secureFetchNoResponse(`${API_BASE}/burn/${tokenId}`, {
-    method: 'POST',
-  });
-}
-
-export async function mintEventToManyUsers(eventId: number, addresses: string[], signer_address: string): Promise<any> {
-  return secureFetchNoResponse(`${API_BASE}/actions/mintEventToManyUsers`, {
-    method: 'POST',
-    body: JSON.stringify({
-      eventId,
-      addresses,
-      signer_address
-    }),
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
-export async function mintUserToManyEvents(eventIds: number[], address: string, signer_address: string): Promise<any> {
-  return secureFetchNoResponse(`${API_BASE}/actions/mintUserToManyEvents`, {
-    method: 'POST',
-    body: JSON.stringify({
-      eventIds,
-      address,
-      signer_address
-    }),
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
-export async function updateEvent(event: PoapEvent) {
-  return secureFetchNoResponse(`${API_BASE}/events/${event.fancy_id}`, {
-    method: 'PUT',
-    body: JSON.stringify(event),
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
-export async function createEvent(event: PoapEvent) {
-  return secureFetchNoResponse(`${API_BASE}/events`, {
-    method: 'POST',
-    body: JSON.stringify(event),
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-
 export async function getSigners(): Promise<AdminAddress[]> {
   return fetchJson(`${API_BASE}/signers`);
-}
-
-export function setSigner(id: number, gasPrice: string): Promise<any> {
-  return secureFetchNoResponse(`${API_BASE}/signers/${id}`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({gas_price: gasPrice})
-  });
-}
-
-export function getTransactions(limit: number, offset: number, status: string): Promise<PaginatedTransactions> {
-  return secureFetch(`${API_BASE}/transactions?limit=${limit}&offset=${offset}&status=${status}`);
-}
-
-export function bumpTransaction(tx_hash: string, gasPrice: string): Promise<any> {
-  return secureFetchNoResponse(`${API_BASE}/actions/bump`, {
-    method: 'POST',
-    body: JSON.stringify({txHash: tx_hash, gas_price: gasPrice})
-  });
 }
 
 export async function getClaimHash(hash: string): Promise<HashClaim> {
