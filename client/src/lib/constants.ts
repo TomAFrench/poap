@@ -27,8 +27,8 @@ const TX_STATUS = {
 const ETHERSCAN_URL = 'https://etherscan.io';
 
 const etherscanLinks = {
-  tx: (hash: string): string => `https://etherscan.io/tx/${hash}`,
-  address: (address: string): string => `https://etherscan.io/address/${address}`,
+  tx: (hash: string): string => `${ETHERSCAN_URL}/tx/${hash}`,
+  address: (address: string): string => `${ETHERSCAN_URL}/address/${address}`,
 };
 
 export { ROUTES, TX_STATUS, etherscanLinks };
