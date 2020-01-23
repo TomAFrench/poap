@@ -1,13 +1,9 @@
 const ROUTES = {
   home: '/',
-  scan: '/scan/:account',
   token: '/token/:tokenId',
   signerClaimPage: '/signer/claim/:event',
   codeClaimPageHash: '/claim/:hash',
   codeClaimPage: '/claim',
-  events: '/admin/events',
-  eventsNew: '/admin/events/new',
-  event: '/admin/events/:eventId',
 };
 
 const TX_STATUS = {
