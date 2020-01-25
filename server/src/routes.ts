@@ -98,6 +98,8 @@ export default async function routes(fastify: FastifyInstance) {
     }
   );
 
+
+
   // fastify.post(
   //   '/actions/claim',
   //   {

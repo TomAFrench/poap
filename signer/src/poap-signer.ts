@@ -7,12 +7,15 @@ import fastifyCompress from 'fastify-compress';
 import fastifyCors from 'fastify-cors';
 import fastifyHelmet from 'fastify-helmet';
 import createError from 'http-errors';
-import uuidv1 from 'uuid/v1';
+
+import { isAdmin } from './api'
+import { verifyClaim, signReceipt } from './verify_proof';
+import { ClaimReceipt, Claim } from './types';
 
 const program = commander
-  .option('-g --genkeys', 'Generate Addres/Private key pair')
+  .option('-g --genkeys', 'Generate Address/Private key pair')
   .option('-p --port <number>', 'Port to listen to', v => parseInt(v), 8080)
-  .option('-e --event <number>', 'Event Address for signing', v => parseInt(v))
+  .option('-e --event <address>', 'Event Address for signing')
   .option('-k --sk <privatekey>', 'Private Key for signing')
   .parse(process.argv);
 
@@ -63,60 +66,79 @@ fastify.get('/check', async (req, res) => {
   };
 });
 
+const claimObject = {
+  type: 'object',
+  required: ['eventAddress', 'userAddress', 'claimSignature'],
+  properties: {
+    eventAddress: {
+      type: 'string',
+      minLength: 42,
+      maxLength: 42,
+      pattern: '^0x[0-9a-fA-F]{40}$',
+    },
+    userAddress: {
+      type: 'string',
+      minLength: 42,
+      maxLength: 42,
+      pattern: '^0x[0-9a-fA-F]{40}$',
+    },
+    claimSignature: {
+      type: 'string',
+    },
+  }
+}
+
+
 fastify.post(
   '/api/proof',
   {
     schema: {
-      body: {
+      body: claimObject,
+      response: {
         type: 'object',
-        required: ['eventAddress', 'claimer'],
         properties: {
-          eventAddress: {
+          claim: claimObject,
+          receiptSignature: {
             type: 'string',
-            minLength: 42,
-            maxLength: 42,
-            pattern: '^0x[0-9a-fA-F]{40}$',
-          },
-          claimer: {
-            type: 'string',
-            minLength: 42,
-            maxLength: 42,
-            pattern: '^0x[0-9a-fA-F]{40}$',
           },
         },
       },
-      // response: {
-      //   type: 'object',
-      //   properties: {
-      //     eventId: { type: 'integer', minimum: 1 },
-      //     claimer: 'address#',
-      //     proof: 'signature#',
-      //   },
-      // },
     },
   },
   async req => {
-    const { eventAddress, claimer }: { eventAddress: string; claimer: string } = req.body;
+    const { eventAddress, userAddress, claimSignature }: { eventAddress: string; userAddress: string; claimSignature: string } = req.body;
+    const claim: Claim = { eventAddress, userAddress, claimSignature }
+
+    //TODO: Check that userAddress is registered for the event.
 
     if (eventAddress != program.event) {
       return new createError.BadRequest('Invalid EventId');
     }
 
-    const claimId = uuidv1();
-    const msg = JSON.stringify([claimId, eventAddress, claimer]);
-    const proof = await signerWallet.signMessage(msg);
-    return {
-      claimId,
-      eventAddress,
-      claimer,
-      proof,
-    };
+    const userSignedClaim: Boolean = await verifyClaim(claim)
+    if (!userSignedClaim) {
+      return new createError.BadRequest('Invalid Signature');
+    }
+
+    const receiptSignature: string = await signReceipt(signerWallet, claim)
+    const receipt: ClaimReceipt = { claim, receiptSignature }
+
+    // TODO: Push receipt to server
+
+    // Return receipt to user for verification
+    return receipt
   }
 );
 
 const start = async () => {
   console.log(`POAP Signer Started (v1.1):`);
   console.log(`Event Address: ${program.event}`);
+
+  const admin: Boolean = await isAdmin(program.event, signerWallet.address)
+  if (!admin) {
+    console.log("This private key is not listed as an admin of this event!")
+    console.log(`Please add ${signerWallet.address} as an admin on kickback.events`)
+  }
 
   try {
     await fastify.listen(program.port, '0.0.0.0');
