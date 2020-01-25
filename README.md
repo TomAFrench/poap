@@ -4,7 +4,6 @@
 
 Kickback POAP is divided in the following applications/projects:
 
-- **eth**: ZeppelinOS project with POAP Contracts
 - **server**: POAP's api server. All server logic goes here
 - **client**: React web application that represents the UI of the application. Uses _server_ as backend.
 - **signer**: Signer server, to be deployed on the event site in a private network address.
