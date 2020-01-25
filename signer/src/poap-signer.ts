@@ -88,21 +88,22 @@ const claimObject = {
   }
 }
 
+const receiptObject = {
+  type: 'object',
+  properties: {
+    claim: claimObject,
+    receiptSignature: {
+      type: 'string',
+    },
+  },
+}
 
 fastify.post(
   '/api/proof',
   {
     schema: {
       body: claimObject,
-      response: {
-        type: 'object',
-        properties: {
-          claim: claimObject,
-          receiptSignature: {
-            type: 'string',
-          },
-        },
-      },
+      response: receiptObject
     },
   },
   async req => {
