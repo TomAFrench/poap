@@ -1,10 +1,6 @@
 import { FastifyInstance } from 'fastify';
 import createError from 'http-errors';
 
-import {
-  resolveName,
-  lookupAddress,
-} from './poap-helper';
 import { verifyReceipt } from './verify_receipt';
 import { ClaimReceipt } from './types';
 
@@ -50,65 +46,6 @@ export default async function routes(fastify: FastifyInstance) {
   //********************************************************************
   // ACTIONS
   //********************************************************************
-
-  fastify.get(
-    '/actions/ens_resolve',
-    {
-      schema: {
-        querystring: {
-          name: { type: 'string' },
-        },
-      },
-    },
-    async (req, res) => {
-      if (req.query['name'] == null || req.query['name'] == '') {
-        throw new createError.BadRequest('"name" query parameter is required');
-      }
-      const resolvedAddress = await resolveName(req.query['name']);
-
-      if (resolvedAddress == null) {
-        return {
-          valid: false,
-        };
-      } else {
-        return {
-          valid: true,
-          address: resolvedAddress,
-        };
-      }
-    }
-  );
-
-  fastify.get(
-    '/actions/ens_lookup/:address',
-    {
-      schema: {
-        params: {
-          address: 'address#'
-        },
-      },
-    },
-    async (req, res) => {
-      const address = req.params.address;
-
-      if (address == null || address == '') {
-        throw new createError.BadRequest('"address" query parameter is required');
-      }
-
-      const resolved = await lookupAddress(address);
-
-      if (resolved == null) {
-        return {
-          valid: false,
-        };
-      } else {
-        return {
-          valid: true,
-          ens: resolved,
-        };
-      }
-    }
-  );
 
   fastify.post(
     '/actions/claim',

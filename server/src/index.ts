@@ -6,7 +6,6 @@ import fastifyRateLimit from 'fastify-rate-limit';
 // @ts-ignore
 import fastifyCompress from 'fastify-compress';
 
-import authPlugin from './auth';
 import routes from './routes';
 import dotenv from 'dotenv'
 
@@ -28,7 +27,6 @@ fastify.register(fastifyRateLimit, {
 fastify.register(fastifyCors, {});
 fastify.register(fastifyCompress, {});
 
-fastify.register(authPlugin);
 fastify.register(routes);
 
 const start = async () => {
