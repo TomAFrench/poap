@@ -34,15 +34,9 @@ export default async function routes(fastify: FastifyInstance) {
     type: 'object',
     required: ['eventAddress', 'userAddress', 'claimSignature'],
     properties: {
-      eventAddress: {
-        type: 'address#',
-      },
-      userAddress: {
-        type: 'address#',
-      },
-      claimSignature: {
-        type: 'signature#',
-      },
+      eventAddress: 'address#',
+      userAddress: 'address#',
+      claimSignature: 'signature#',
     }
   });
 
@@ -51,12 +45,8 @@ export default async function routes(fastify: FastifyInstance) {
     type: 'object',
     required: ['claim', 'receiptSignature'],
     properties: {
-      claim: {
-        type: 'claim#',
-      },
-      receiptSignature: {
-        type: 'signature#',
-      },
+      claim: 'claim#',
+      receiptSignature: 'signature#',
     }
   });
 
@@ -98,9 +88,7 @@ export default async function routes(fastify: FastifyInstance) {
     {
       schema: {
         params: {
-          address: {
-            type: 'string',
-          },
+          address: 'address#'
         },
       },
     },
@@ -130,9 +118,7 @@ export default async function routes(fastify: FastifyInstance) {
     '/actions/claim',
     {
       schema: {
-        body: {
-          type: 'receipt#',
-        },
+        body: 'receipt#',
       },
     },
     async (req, res) => {

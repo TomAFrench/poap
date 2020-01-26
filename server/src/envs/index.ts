@@ -1,15 +1,11 @@
 import { Provider, InfuraProvider, JsonRpcProvider } from 'ethers/providers';
-import { Wallet, getDefaultProvider } from 'ethers';
+import { getDefaultProvider } from 'ethers';
 
 export interface EnvVariables {
   provider: Provider;
   secretKey: string;
   infuraNet: string;
   providerStr: string;
-}
-
-export interface PoapHelpers {
-  [address: string]: Wallet;
 }
 
 function ensureEnvVariable(name: string): string {

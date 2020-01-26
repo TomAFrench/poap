@@ -8,9 +8,14 @@ import fastifyCors from 'fastify-cors';
 import fastifyHelmet from 'fastify-helmet';
 import createError from 'http-errors';
 
-import { isAdmin } from './api'
+import { extractUsersWithGivenEventRole, ROLE } from '@wearekickback/shared'
+
 import { verifyClaim, signReceipt } from './verify_proof';
-import { ClaimReceipt, Claim } from './types';
+import { Address, ClaimReceipt, Claim } from './types';
+import { getParty } from './api';
+
+
+const axios = require('axios');
 
 const program = commander
   .option('-g --genkeys', 'Generate Address/Private key pair')
@@ -27,12 +32,12 @@ if (program.genkeys) {
 
   console.log('Now call poap-signer using the private key');
   console.log(`  poap-signer --sk ${w.privateKey} ...`);
-  console.log('Remember to save the address in POAP Backofice');
+  console.log('Remember to add the address as an admin to the event on kickback.events');
   process.exit(0);
 }
 
 if (!program.event) {
-  console.error('event is Required');
+  console.error('Address is Required');
   program.help();
 }
 if (!program.sk) {
@@ -60,88 +65,129 @@ fastify.register(fastifyHelmet, {
 fastify.register(fastifyCors, {});
 fastify.register(fastifyCompress, {});
 
-fastify.get('/check', async (req, res) => {
+fastify.addSchema({
+  $id: 'address',
+  type: 'string',
+  minLength: 42,
+  maxLength: 42,
+  pattern: '^0x[0-9a-fA-F]{40}$',
+});
+
+
+fastify.addSchema({
+  $id: 'signature',
+  type: 'string',
+  minLength: 132,
+  maxLength: 132,
+  pattern: '^0x[0-9a-fA-F]{130}$',
+});
+
+
+fastify.addSchema({
+  $id: 'claim',
+  type: 'object',
+  required: ['eventAddress', 'userAddress', 'claimSignature'],
+  properties: {
+    eventAddress: 'address#',
+    userAddress: 'address#',
+    claimSignature: 'signature#',
+
+  }
+});
+
+fastify.addSchema({
+  $id: 'receipt',
+  type: 'object',
+  required: ['claim', 'receiptSignature'],
+  properties: {
+    claim: 'claim#',
+    receiptSignature: 'signature#'
+  }
+});
+
+fastify.get('/event', async (req, res) => {
   return {
     eventAddress: program.event,
   };
 });
 
-const claimObject = {
-  type: 'object',
-  required: ['eventAddress', 'userAddress', 'claimSignature'],
-  properties: {
-    eventAddress: {
-      type: 'string',
-      minLength: 42,
-      maxLength: 42,
-      pattern: '^0x[0-9a-fA-F]{40}$',
-    },
-    userAddress: {
-      type: 'string',
-      minLength: 42,
-      maxLength: 42,
-      pattern: '^0x[0-9a-fA-F]{40}$',
-    },
-    claimSignature: {
-      type: 'string',
-    },
-  }
-}
-
-const receiptObject = {
-  type: 'object',
-  properties: {
-    claim: claimObject,
-    receiptSignature: {
-      type: 'string',
-    },
-  },
-}
-
 fastify.post(
-  '/api/proof',
+  '/api/checkin',
   {
     schema: {
-      body: claimObject,
-      response: receiptObject
+      body: 'claim#',
+      response: {
+        200: 'receipt#',
+      }
     },
   },
-  async req => {
-    const { eventAddress, userAddress, claimSignature }: { eventAddress: string; userAddress: string; claimSignature: string } = req.body;
-    const claim: Claim = { eventAddress, userAddress, claimSignature }
+  async (req, reply) => {
+    console.log(req.body)
+    const claim: Claim = req.body
 
-    //TODO: Check that userAddress is registered for the event.
+    if (claim.eventAddress != program.event) {
+      return new createError.BadRequest('Invalid eventAddress');
+    }
 
-    if (eventAddress != program.event) {
-      return new createError.BadRequest('Invalid EventId');
+    const userRegistered = isRegistered(claim.userAddress)
+    if (!userRegistered) {
+      return new createError.BadRequest('Invalid userAddress');
     }
 
     const userSignedClaim: Boolean = await verifyClaim(claim)
     if (!userSignedClaim) {
-      return new createError.BadRequest('Invalid Signature');
+      return new createError.BadRequest('Invalid Signature')
     }
 
     const receiptSignature: string = await signReceipt(signerWallet, claim)
     const receipt: ClaimReceipt = { claim, receiptSignature }
 
-    // TODO: Push receipt to server
+    try {
+      await axios.post('http://localhost:8081/actions/claim', receipt)
+      // Return receipt to user for verification
+      return receipt
+    } catch (err) {
+      // Alert user to the fact that receipt hasn't been recorded
+      // TODO: Locally save a copy of the receipt.
+      return new createError.InternalServerError('Couldn\'t upload receipt')
+    }
 
-    // Return receipt to user for verification
-    return receipt
+
   }
 );
 
+let party: any = {}
+let participants: Array<Address> = []
+let admins: Array<Address> = []
+
+function isRegistered(address: Address) {
+  return participants.includes(address.toLowerCase())
+}
+
+function isAdmin(address: Address) {
+  return admins.includes(address.toLowerCase())
+}
+
 const start = async () => {
-  console.log(`POAP Signer Started (v1.1):`);
+  console.log(`Kickback Signer Started (v1.1):`);
   console.log(`Event Address: ${program.event}`);
 
-  const admin: Boolean = await isAdmin(program.event, signerWallet.address)
-  if (!admin) {
+  // Caches a copy of the event info to quickly verify user addresses
+  party = await getParty(program.event)
+  participants = party.participants.map(({ user }: { user: { address: Address } }) => user.address)
+  admins = extractUsersWithGivenEventRole(party, ROLE.EVENT_ADMIN).map(({ address }: { address: Address }) => address)
+
+
+  if (!isAdmin(signerWallet.address)) {
     console.log("This private key is not listed as an admin of this event!")
     console.log(`Please add ${signerWallet.address} as an admin on kickback.events`)
+    process.exit(1);
   }
+  console.log(`Admin Account: ${signerWallet.address}`);
 
   try {
+    console.log()
+    console.log(`Ready to take check-ins for ${party.name}`)
     await fastify.listen(program.port, '0.0.0.0');
   } catch (err) {
     fastify.log.error(err);

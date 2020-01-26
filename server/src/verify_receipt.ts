@@ -2,6 +2,7 @@ import { verifyMessage } from 'ethers/utils';
 import pino from 'pino';
 import { Claim, ClaimReceipt } from './types'
 
+import { isAdmin, isRegistered } from './api'
 const Logger = pino()
 
 export async function verifyReceipt(receipt: ClaimReceipt): Promise<boolean> {
@@ -16,7 +17,7 @@ export async function verifyReceipt(receipt: ClaimReceipt): Promise<boolean> {
       return true
     }
   }
-  return true;
+  return false;
 }
 
 
@@ -24,16 +25,15 @@ export async function verifyReceiptSignature(receipt: ClaimReceipt): Promise<boo
 
   const { claim }: { claim: Claim } = receipt
 
-  const receiptMessage = JSON.stringify([claim.eventAddress, claim.userAddress, claim.claimSignature])
+  const receiptMessage = JSON.stringify([claim.eventAddress, claim.userAddress])
 
   const supposedAdminAddress = verifyMessage(receiptMessage, receipt.receiptSignature);
 
-  // Check that the signing address is an admin of the event.
-  // const isAdmin = admincheck(claim.eventAddress, supposedAdminAddress)
-  // if (!isAdmin) {
-  //   console.log('invalid admin signature');
-  //   return false;
-  // }
+  const admin = isAdmin(claim.eventAddress, supposedAdminAddress)
+  if (!admin) {
+    console.log('invalid admin signature');
+    return false;
+  }
   return true;
 }
 
@@ -41,6 +41,11 @@ export async function verifyReceiptSignature(receipt: ClaimReceipt): Promise<boo
 export async function verifyClaim(claim: Claim): Promise<boolean> {
 
   // TODO: check that userAddress is registered for eventAddress
+  const isParticipant = isRegistered(claim.eventAddress, claim.userAddress)
+  if (!isParticipant) {
+    console.log(`user isn't registered`);
+    return false;
+  }
 
   Logger.info({ claim }, 'Claim for event: %d from: %s', claim.eventAddress, claim.userAddress);
 

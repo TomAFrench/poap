@@ -7,17 +7,13 @@ const Logger = pino()
 
 export async function verifyClaim(claim: Claim): Promise<boolean> {
 
-  if (!event) {
-    throw new Error('Invalid Event Id');
-  }
-
   Logger.info({ claim }, 'Claim for event: %d from: %s', claim.eventAddress, claim.userAddress);
 
-  const claimerMessage = JSON.stringify([claim.eventAddress, claim.userAddress, claim.claimSignature]);
+  const claimerMessage = JSON.stringify([claim.eventAddress, claim.userAddress]);
 
   Logger.info({ claimerMessage }, 'claimerMessage');
 
-  const supposedClaimedAddress = verifyMessage(claimerMessage, claim.userAddress);
+  const supposedClaimedAddress = verifyMessage(claimerMessage, claim.claimSignature);
 
   // User has not signed this claim
   if (supposedClaimedAddress !== claim.userAddress) {

@@ -3,7 +3,7 @@ import { RouteComponentProps } from 'react-router';
 import { Link } from 'react-router-dom';
 import classNames from 'classnames';
 
-import { getEvent, checkSigner, KickbackEvent, Address } from '../api';
+import { checkSigner, KickbackEvent, Address } from '../api';
 import { tryGetAccount, hasMetamask, isMetamaskLogged, tryCheckIn } from '../poap-eth';
 import { useAsync, useBodyClassName } from '../react-helpers';
 import { ClaimFooter } from '../components/ClaimFooter';
@@ -13,21 +13,117 @@ import HeaderShadowDesktopGreenImg from '../images/header-shadow-desktop-green.s
 import HeaderShadowDesktopImg from '../images/header-shadow-desktop.svg';
 import HeaderShadowGreenImg from '../images/header-shadow-green.svg';
 import HeaderShadowImg from '../images/header-shadow.svg';
+import KickbackImg from '../images/kickback.jpg';
+
+const gqlr = require('graphql-request')
+const { GraphQLClient } = gqlr
 
 type ClaimPageState = {
   event: null | KickbackEvent;
   invalidEventFlag: boolean;
 };
 
+export const getPartyQuery = `
+  query getParty($eventAddress: String!){
+    party(address: $eventAddress) {
+      id
+      address
+      name
+      description
+      timezone
+      start
+      end
+      arriveBy
+      location
+      headerImg
+      balance
+      deposit
+      tokenAddress
+      coolingPeriod
+      participantLimit
+      ended
+      cancelled
+      status
+      roles {
+        role
+        user {
+          id
+          address
+          username
+          realName
+          roles
+          social {
+            type
+            value
+          }
+          legal {
+            id
+            type
+            accepted
+          }
+          email {
+            verified
+            pending
+          }
+        }
+      }
+      participants {
+        user {
+          id
+          address
+          username
+          realName
+          roles
+          social {
+            type
+            value
+          }
+          legal {
+            id
+            type
+            accepted
+          }
+          email {
+            verified
+            pending
+          }
+        }
+        status
+        index
+      }
+    }
+  }
+`
+
+export async function getParty(eventAddress: Address) {
+  const endpoint = `https://kovan.api.kickback.events/graphql`
+  // console.log(
+  //   `
+  // Config
+  // ------
+  // Endpoint:               ${endpoint}
+  // Party id:               ${eventAddress}
+  // `
+  // )
+
+  const client = new GraphQLClient(endpoint, {
+    headers: {
+      Authorization: ``
+    }
+  })
+  const { party } = await client.request(getPartyQuery, { eventAddress })
+  return party
+}
+
 export const LoadEvent: React.FC<{
   fancyId: string;
   render: (event: KickbackEvent) => React.ReactElement;
 }> = ({ fancyId, render }) => {
-  const getEventMemo = useCallback(() => getEvent(fancyId), [fancyId]);
+  const getEventMemo = useCallback(() => getParty(fancyId), [fancyId]);
   const [event, fetchingEvent, fetchEventError] = useAsync(getEventMemo);
 
   if (event == null || fetchEventError) {
-    return <ClaimFooter />;
+    return null
   } else if (fetchingEvent) {
     return <Loading />;
   }
@@ -55,7 +151,7 @@ export const CheckAccount: React.FC<{
 export const SignerClaimPage: React.FC<RouteComponentProps<{ event: string }>> = ({ match }) => {
   return (
     <>
-      <LoadEvent fancyId={match.params.event} render={event => <ClaimPageInner event={event} />} />
+      <LoadEvent fancyId={"0xb3766946dabdf7ea261b8fa7154f68dc98c2cfd1"} render={event => <ClaimPageInner event={event} />} />
       <ClaimFooter />
     </>
   );
@@ -69,16 +165,17 @@ enum ClaimState {
   MetaMaskLoggedOut,
 }
 
-const ClaimPageInner: React.FC<{ event: KickbackEvent }> = React.memo(({ event }) => {
-  const hasSigner = event.signer != null && event.signer_ip != null;
-  const checkLocation = useCallback(() => checkSigner(event.signer_ip, event.eventAddress), [event]);
+const ClaimPageInner: React.FC<{ event: any }> = React.memo(({ event }) => {
+  console.log(event)
+  // const hasSigner = event.signer != null && event.signer_ip != null;
+  const checkLocation = useCallback(() => checkSigner("http://localhost:8080", event.address), [event]);
   const [onLocation, checkingLocation] = useAsync(checkLocation);
 
   const [claimState, setClaimState] = useState(ClaimState.Idle);
-  const checkIn = useCallback(async (event: KickbackEvent, account: Address) => {
+  const checkIn = useCallback(async (event: any, account: Address) => {
     setClaimState(ClaimState.Working);
     try {
-      await tryCheckIn(event, account);
+      await tryCheckIn("http://localhost:8080", event, account);
       setClaimState(ClaimState.Finished);
     } catch (err) {
       console.log(err);
@@ -112,7 +209,7 @@ const ClaimPageInner: React.FC<{ event: KickbackEvent }> = React.memo(({ event }
                     <p className="wallet-number">{account}</p>
                     {claimState === ClaimState.Idle && (
                       <ClaimButton
-                        hasSigner={hasSigner}
+                        hasSigner={true}
                         onLocation={onLocation}
                         checkingLocation={checkingLocation}
                         obtainBadge={() => checkIn(event, account)}
@@ -186,31 +283,13 @@ const ClaimButton: React.FC<ClaimButtonProps> = React.memo(
   }
 );
 
-const ClaimHeader: React.FC<{ event: KickbackEvent }> = React.memo(({ event }) => (
+const ClaimHeader: React.FC<{ event: any }> = React.memo(({ event }) => (
   <header id="site-header" role="banner" className="header-events">
     <div className="container">
       <h1>{event.name}</h1>
       <div className="logo-event" data-aos="fade-up">
-        <img src={event.image_url} alt="Event" />
+        <img src={event.headerImg || KickbackImg} alt="Event" />
       </div>
     </div>
   </header>
 ));
-
-/**
-
-1) Cargo... todavia no se si tengo web3 [ Detecting web3...]
-2) Espero a ver si tengo web3 (3 segundos)
-3) Si es Metmask => Pido enable() (en el claimer)
-4) Si no es metamask => Pido first account y la uso
-5) Si no tengo nada => muestro mensaje de error
-
-post (3) y (4)
-
-
-Estados:
-  - CheckingWeb3
-  - WalletReady
-  - MintingToken
-  - WalletMissing
- */

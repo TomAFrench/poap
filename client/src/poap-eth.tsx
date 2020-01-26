@@ -1,6 +1,6 @@
 import { Signer } from 'ethers/abstract-signer';
 import { Web3Provider } from 'ethers/providers';
-import { claimToken, KickbackEvent, requestProof } from './api';
+import { requestProof } from './api';
 import { getAddress } from 'ethers/utils';
 
 declare global {
@@ -110,38 +110,19 @@ export async function tryGetAccount(): Promise<null | string> {
   return rawAddress == null ? null : getAddress(rawAddress);
 }
 
-// export async function tryObtainBadge(event: PoapEvent, claimer: string): Promise<any> {
-//   const claimProof = await requestProof(event.signer_ip, event.id, claimer);
-//   const signer = await getUserWallet();
-
-//   const claimerMsg = JSON.stringify([
-//     claimProof.claimId,
-//     claimProof.eventAddress,
-//     claimProof.claimer,
-//     claimProof.proof,
-//   ]);
-//   const claimerSignature = await signer.signMessage(claimerMsg);
-
-//   await claimToken({
-//     ...claimProof,
-//     claimerSignature,
-//   });
-// }
-
-export async function tryCheckIn(event: KickbackEvent, claimer: string): Promise<any> {
-  const claimProof = await requestProof(event.signer_ip, event.eventAddress, claimer);
+export async function tryCheckIn(signerIp: string, event: any, claimer: string): Promise<any> {
   const signer = await getUserWallet();
 
-  const claimerMsg = JSON.stringify([
-    claimProof.claimId,
-    claimProof.eventAddress,
-    claimProof.claimer,
-    claimProof.proof,
-  ]);
-  const claimerSignature = await signer.signMessage(claimerMsg);
+  const claimerMsg = JSON.stringify([event.address, claimer])
 
-  await claimToken({
-    ...claimProof,
-    claimerSignature,
-  });
+  const claimSignature = await signer.signMessage(claimerMsg);
+
+  const claim = {
+    userAddress: claimer,
+    eventAddress: event.address,
+    claimSignature
+  }
+
+  const claimProof = await requestProof(signerIp, claim);
+  return claimProof
 }

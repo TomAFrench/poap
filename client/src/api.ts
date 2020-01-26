@@ -19,8 +19,8 @@ export interface KickbackEvent {
   signer: Address;
   signer_ip: string;
   name: string;
-  event_url: string;
-  image_url: string;
+  description: string
+  headerImg: string;
 }
 
 export interface Claim extends ClaimProof {
@@ -112,7 +112,7 @@ export async function claimToken(claim: Claim): Promise<void> {
 
 export async function checkSigner(signerIp: string, eventAddress: Address): Promise<boolean> {
   try {
-    const res = await fetch(`${signerIp}/check`);
+    const res = await fetch(`${signerIp}/event`);
     if (!res.ok) {
       return false;
     }
@@ -125,12 +125,11 @@ export async function checkSigner(signerIp: string, eventAddress: Address): Prom
 
 export async function requestProof(
   signerIp: string,
-  eventAddress: Address,
-  claimer: string
+  claim: any
 ): Promise<ClaimProof> {
-  return fetchJson(`${signerIp}/api/proof`, {
+  return fetchJson(`${signerIp}/api/checkin`, {
     method: 'POST',
-    body: JSON.stringify({ eventAddress, claimer }),
+    body: JSON.stringify(claim),
     headers: { 'Content-Type': 'application/json' },
   });
 }
