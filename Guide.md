@@ -45,8 +45,6 @@ It currently assumes that the signer is running on `http://localhost:8080`
 
 #### Signer
 
-Currently some urls are semi-hardcoded and assume you're running on the default ports on localhost.
-
 ```bash
 cd signer
 yarn build
