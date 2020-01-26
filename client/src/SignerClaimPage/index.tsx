@@ -151,7 +151,7 @@ export const CheckAccount: React.FC<{
 export const SignerClaimPage: React.FC<RouteComponentProps<{ event: string }>> = ({ match }) => {
   return (
     <>
-      <LoadEvent fancyId={"0xb3766946dabdf7ea261b8fa7154f68dc98c2cfd1"} render={event => <ClaimPageInner event={event} />} />
+      <LoadEvent fancyId={match.params.event} render={event => <ClaimPageInner event={event} />} />
       <ClaimFooter />
     </>
   );
