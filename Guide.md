@@ -43,6 +43,8 @@ The server pulls data from `https://kovan.api.kickback.events` as it needs to so
 
 It currently assumes that the signer is running on `http://localhost:8080`
 
+Note: The server currently verifies any receipts it receives but doesn't take any further action than returning whether the receipt was accepted.
+
 #### Signer
 
 ```bash
