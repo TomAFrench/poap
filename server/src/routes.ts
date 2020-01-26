@@ -2,15 +2,11 @@ import { FastifyInstance } from 'fastify';
 import createError from 'http-errors';
 
 import {
-  // verifyClaim,
   resolveName,
   lookupAddress,
 } from './poap-helper';
 import { verifyReceipt } from './verify_receipt';
 import { ClaimReceipt } from './types';
-
-// import crypto from 'crypto';
-// import getEnv from './envs';
 
 export default async function routes(fastify: FastifyInstance) {
   fastify.addSchema({
