@@ -75,17 +75,7 @@ export const getPartyQuery = `
   }
 `
 
-export async function getParty(eventAddress: Address) {
-  const endpoint = `https://kovan.api.kickback.events/graphql`
-  // console.log(
-  //   `
-  // Config
-  // ------
-  // Endpoint:               ${endpoint}
-  // Party id:               ${eventAddress}
-  // `
-  // )
-
+export async function getParty(endpoint: string, eventAddress: Address) {
   const client = new GraphQLClient(endpoint, {
     headers: {
       Authorization: ``

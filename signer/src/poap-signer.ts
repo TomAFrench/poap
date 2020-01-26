@@ -22,6 +22,8 @@ const program = commander
   .option('-p --port <number>', 'Port to listen to', v => parseInt(v), 8080)
   .option('-e --event <address>', 'Event Address for signing')
   .option('-k --sk <privatekey>', 'Private Key for signing')
+  .option('-a --api <url>', 'API url to get event data from', "https://kovan.api.kickback.events/graphql")
+  .option('-s --server <url>', 'server url to send receipts to', "http://localhost:8081/actions/claim")
   .parse(process.argv);
 
 if (program.genkeys) {
@@ -143,7 +145,7 @@ fastify.post(
     const receipt: ClaimReceipt = { claim, receiptSignature }
 
     try {
-      await axios.post('http://localhost:8081/actions/claim', receipt)
+      await axios.post(program.server, receipt)
       // Return receipt to user for verification
       return receipt
     } catch (err) {
@@ -169,11 +171,19 @@ function isAdmin(address: Address) {
 }
 
 const start = async () => {
-  console.log(`Kickback Signer Started (v1.1):`);
-  console.log(`Event Address: ${program.event}`);
+  console.log(`Kickback Signer Started (v1.1):
+
+  Config
+  ------
+  Endpoint:               ${program.api}
+  Receipt Server:         ${program.server}
+  Event Address:          ${program.event}
+  Admin Address:          ${signerWallet.address}
+  `
+  )
 
   // Caches a copy of the event info to quickly verify user addresses
-  party = await getParty(program.event)
+  party = await getParty(program.api, program.event)
   participants = party.participants.map(({ user }: { user: { address: Address } }) => user.address)
   admins = extractUsersWithGivenEventRole(party, ROLE.EVENT_ADMIN).map(({ address }: { address: Address }) => address)
 
@@ -183,11 +193,9 @@ const start = async () => {
     console.log(`Please add ${signerWallet.address} as an admin on kickback.events`)
     process.exit(1);
   }
-  console.log(`Admin Account: ${signerWallet.address}`);
 
   try {
-    console.log()
-    console.log(`Ready to take check-ins for ${party.name}`)
+    console.log(`Ready to take check-ins for ${party.name}\n`)
     await fastify.listen(program.port, '0.0.0.0');
   } catch (err) {
     fastify.log.error(err);
