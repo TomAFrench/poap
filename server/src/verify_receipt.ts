@@ -25,7 +25,7 @@ export async function verifyReceiptSignature(receipt: ClaimReceipt): Promise<boo
 
   const { claim }: { claim: Claim } = receipt
 
-  const receiptMessage = JSON.stringify([claim.eventAddress, claim.userAddress])
+  const receiptMessage = JSON.stringify([claim.eventAddress, claim.userAddress, claim.claimSignature])
 
   const supposedAdminAddress = verifyMessage(receiptMessage, receipt.receiptSignature);
 
