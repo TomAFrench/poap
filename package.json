@@ -4,17 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "ganache": "ganache-cli --port 9545 --deterministic --noVMErrorsOnRPCResponse",
-    "contracts:build": "./scripts/build-contracts.sh",
-    "db:reset": "./scripts/resetdb.sh dev && ./scripts/resetdb.sh test && yarn db:populate",
-    "db:populate": "psql -h localhost -U poap poap_dev < ./db/data-dump.sql",
-    "contracts:deploy:dev": "./scripts/deploy-ganache.sh",
-    "contracts:migrate:dev": "(cd server; ts-node src/migrate.ts writecontract)",
     "start:client": "(cd client; yarn start)",
     "start:server": "(cd server; yarn start:dev)",
-    "contracts:dev": "delay 3 && npm run contracts:deploy:dev",
-    "ganache:dev": "npm-run-all -p ganache contracts:dev",
-    "dev": "npm-run-all -p ganache:dev start:client start:server"
+    "dev": "npm-run-all -p start:client start:server"
   },
   "private": true,
   "author": "Mariano Cortesi <mcortesi@gmail.com>",
