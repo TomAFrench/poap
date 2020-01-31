@@ -18,7 +18,7 @@ import "./PoapPausable.sol";
     // - ERC721 full interface (base, metadata, enumerable)
 
 contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausable {
-    event EventToken(uint256 eventId, uint256 tokenId);
+    event EventToken(uint256 indexed eventId, uint256 tokenId);
 
     // Token name
     string private _name;
